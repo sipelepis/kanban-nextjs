@@ -29,10 +29,9 @@ const LoginAndSignup = () => {
       </div>
     );
   } else {
-    // if (!user) {
     return (
       <div className="container mx-auto flex items-center justify-center h-screen w-1/3">
-        <div className="container mx-auto flex flex-col gap-4 text-center justify-centerbg-white border border-gray-200 shadow-sm rounded-xl p-4 md:p-5 dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400">
+        <div className="container mx-auto flex flex-col gap-4 text-center justify-center bg-white border border-gray-200 shadow-sm rounded-xl p-4 md:p-5 dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400">
           <p>KANBAN - POC</p>
           <div className="flex flex-col justify-between mx-auto w-full gap-2">
             <button
