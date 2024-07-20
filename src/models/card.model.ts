@@ -7,4 +7,5 @@ export interface Card {
   Priority: number;
   DueDate: string;
   LastUpdated: string;
+  Position: number;
 }

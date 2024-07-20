@@ -38,6 +38,7 @@ export type Database = {
           DueDate: string | null
           id: number
           LastUpdated: string | null
+          Position: number | null
           Priority: number | null
           Title: string | null
         }
@@ -48,6 +49,7 @@ export type Database = {
           DueDate?: string | null
           id?: number
           LastUpdated?: string | null
+          Position?: number | null
           Priority?: number | null
           Title?: string | null
         }
@@ -58,6 +60,7 @@ export type Database = {
           DueDate?: string | null
           id?: number
           LastUpdated?: string | null
+          Position?: number | null
           Priority?: number | null
           Title?: string | null
         }
