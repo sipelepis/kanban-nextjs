@@ -10,13 +10,15 @@
   },
   "dependencies": {
     "@hello-pangea/dnd": "^16.6.0",
+    "@preline/overlay": "^2.3.0",
     "@propelauth/nextjs": "^0.1.8",
     "@supabase/supabase-js": "^2.44.4",
     "next": "14.2.5",
     "preline": "^2.3.0",
     "react": "^18",
     "react-beautiful-dnd": "^13.1.1",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "react-hook-form": "^7.52.1"
   },
   "devDependencies": {
     "@types/node": "^20",

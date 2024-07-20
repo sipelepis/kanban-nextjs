@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/initSupabase";
 import { Board } from "@/src/models/board.model";
@@ -15,23 +13,22 @@ export default function Kanban() {
 
   const [loading, setLoading] = useState(true);
   const [isWaiting, setIsWaiting] = useState(false);
+
   const fetchBoards = async () => {
-    const { data: boards, error } = await supabase
+    const { data: boardsResponse, error } = await supabase
       .from("Boards")
       .select("*")
       .order("CreationDate", { ascending: true })
       .returns<Board[]>();
     if (!error) {
-      setBoards(boards);
-      setSelectedBoard(boards![0]);
-      return selectedBoard;
+      setBoards(boardsResponse);
+      return boardsResponse;
     }
   };
-  const fetchColumns = async (BoardID: number) => {
+  const fetchColumns = async () => {
     const { data: columns, error } = await supabase
       .from("Columns")
       .select("*")
-      .eq("BoardID", BoardID)
       .order("Position", { ascending: true })
       .returns<Column[]>();
 
@@ -40,19 +37,33 @@ export default function Kanban() {
       return columns;
     }
   };
-  const fetchCards = async (ColumnID: number) => {
+
+  const fetchCards = async () => {
     const { data: cards, error } = await supabase
       .from("Cards")
       .select("*")
-      .eq("ColumnID", ColumnID)
       .order("Position", { ascending: true })
       .returns<Card[]>();
 
     if (!error) {
+      setCards(cards);
       return cards;
     } else {
       return null;
     }
+  };
+  const filterColumns = (BoardID: number) => {
+    return columns?.filter((column) => column.BoardID === BoardID);
+  };
+  const filterCards = (ColumnID: number) => {
+    return cards?.filter((card) => card.ColumnID === ColumnID);
+  };
+
+  const handleOptionClick = (event: any) => {
+    setLoading(true);
+    const board = boards?.find((board) => board.id === +event!.target!.value!);
+    setSelectedBoard(board!);
+    setLoading(false);
   };
 
   const updateCard = async (
@@ -120,37 +131,29 @@ export default function Kanban() {
         setCards(updatedCards);
       });
   };
+  const fetchData = async () => {
+    await fetchBoards();
+    await fetchColumns();
+    await fetchCards();
+  };
   useEffect(() => {
     if (typeof window !== "undefined") {
-      fetchBoards().then((selectedBoard) => {
-        fetchColumns(selectedBoard?.id!).then((columns) => {
-          columns?.forEach((selectedColumns) => {
-            fetchCards(selectedColumns.id).then((selectedCards) => {
-              setCards((prevCards) => {
-                if (!selectedCards) return prevCards;
-                const updatedCards = prevCards ? [...prevCards] : [];
-
-                selectedCards.forEach((newCard) => {
-                  const cardIndex = updatedCards.findIndex(
-                    (card) => card.id === newCard.id
-                  );
-                  if (cardIndex > -1) {
-                    updatedCards[cardIndex] = newCard;
-                  } else {
-                    updatedCards.push(newCard);
-                  }
-                });
-
-                return updatedCards;
-              });
-            });
-            setLoading(false);
-          });
-        });
-      });
+      fetchData();
     }
   });
-
+  useEffect(() => {
+    const initData = async () => {
+      setLoading(false);
+      await fetchCards();
+      await fetchColumns();
+      fetchBoards().then((boardsResponse) => {
+        setSelectedBoard(boardsResponse![0]);
+      });
+    };
+    if (typeof window !== "undefined") {
+      initData();
+    }
+  }, []);
   if (loading) {
     return (
       <div className="container mx-auto flex items-center justify-center h-screen w-1/3">
@@ -162,37 +165,20 @@ export default function Kanban() {
   } else {
     return (
       <div className="m-4">
-        <div className="w-full flex flex-row justify-between items-center gap-4">
-          <select className="py-3 px-4 pe-9 block w-full bg-gray-100 border-transparent rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-700 dark:border-transparent dark:text-neutral-400 dark:focus:ring-neutral-600">
+        <div className="w-full flex flex-row items-center gap-2 ">
+          <select
+            onChange={handleOptionClick}
+            className="flex-grow py-3 px-4 pe-9 block bg-gray-100 border-transparent rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-700 dark:border-transparent dark:text-neutral-400 dark:focus:ring-neutral-600">
             {boards?.map((board) => (
               <option key={board.id} value={board.id}>
                 {board.BoardName}
               </option>
             ))}{" "}
           </select>
-          <div className="w-32 ">
-            <button
-              type="button"
-              className="my-5 flex flex-shrink-0 w-full justify-center items-center gap-2 size-[46px] text-sm font-semibold rounded-lg border border-transparent bg-white text-gray-800 hover:bg-gray-300 disabled:opacity-50 disabled:pointer-events-none">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="1.5"
-                stroke="currentColor"
-                className="size-5">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 4.5v15m7.5-7.5h-15"
-                />
-              </svg>
-            </button>
-          </div>
         </div>
         <div className="mx-auto flex flex-col lg:flex-row gap-4 my-2">
           <DragDropContext onDragEnd={onDragEnd}>
-            {columns?.map((column) => (
+            {filterColumns(selectedBoard?.id!)?.map((column) => (
               <div
                 key={column.id}
                 className="flex flex-grow flex-col bg-white border shadow-sm rounded-xl dark:bg-neutral-900 dark:border-neutral-700 dark:shadow-neutral-700/70">
@@ -221,40 +207,38 @@ export default function Kanban() {
                         <div
                           className={`bg-gray-100 rounded-md shadow-md p-5 flex flex-col gap-4
                             ${snapshot.isDraggingOver && "bg-green-100"}`}>
-                          {cards
-                            ?.filter((card) => card.ColumnID === column.id)
-                            .map((card, index) => {
-                              return (
-                                <Draggable
-                                  key={card.id.toString()}
-                                  index={index}
-                                  draggableId={card.id.toString()}
-                                  isDragDisabled={isWaiting}
-                                  disableInteractiveElementBlocking={true}>
-                                  {(provided) => (
+                          {filterCards(column.id!)!.map((card, index) => {
+                            return (
+                              <Draggable
+                                key={card.id.toString()}
+                                index={index}
+                                draggableId={card.id.toString()}
+                                isDragDisabled={isWaiting}
+                                disableInteractiveElementBlocking={true}>
+                                {(provided) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    {...provided.dragHandleProps}>
                                     <div
-                                      ref={provided.innerRef}
-                                      {...provided.draggableProps}
-                                      {...provided.dragHandleProps}>
-                                      <div
-                                        className="overflow-y-auto overflow-x-hidden h-auto cursor-pointer"
-                                        style={{
-                                          maxHeight: "calc(100vh - 290px)",
-                                        }}>
-                                        <div className="p-4 w-full flex flex-col flex-grow bg-white border shadow-sm rounded-lg dark:bg-neutral-900 dark:border-neutral-700 dark:shadow-neutral-700/70">
-                                          <p className="dark:text-white">
-                                            <strong>{card.Title}</strong>
-                                          </p>
-                                          <p className="dark:text-white">
-                                            <small>{card.Description}</small>
-                                          </p>
-                                        </div>
+                                      className="overflow-y-auto overflow-x-hidden h-auto cursor-pointer"
+                                      style={{
+                                        maxHeight: "calc(100vh - 290px)",
+                                      }}>
+                                      <div className="p-4 w-full flex flex-col flex-grow bg-white border shadow-sm rounded-lg dark:bg-neutral-900 dark:border-neutral-700 dark:shadow-neutral-700/70">
+                                        <p className="dark:text-white">
+                                          <strong>{card.Title}</strong>
+                                        </p>
+                                        <p className="dark:text-white">
+                                          <small>{card.Description}</small>
+                                        </p>
                                       </div>
                                     </div>
-                                  )}
-                                </Draggable>
-                              );
-                            })}
+                                  </div>
+                                )}
+                              </Draggable>
+                            );
+                          })}
                           {provided.placeholder}
                         </div>
                       </div>

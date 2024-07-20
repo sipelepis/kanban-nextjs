@@ -1,4 +1,3 @@
-"use client";
 import { Card } from "@/src/models/card.model";
 
 // Assuming CardProps is defined to include the types for the props
