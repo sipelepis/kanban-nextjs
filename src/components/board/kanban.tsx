@@ -1,15 +1,23 @@
+"use client";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/initSupabase";
 import { Board } from "@/src/models/board.model";
 import { Column } from "@/src/models/column.model";
 import { Card } from "@/src/models/card.model";
 import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
-export default function Kanban() {
-  const [boards, setBoards] = useState<Board[] | null>(null);
-  const [columns, setColumns] = useState<Column[] | null>(null);
-  const [cards, setCards] = useState<Card[] | null>(null);
+import HSOverlay from "@preline/overlay";
+import CreateCardModal from "../modals/create-cards";
+import CreateBoardModal from "../../components/modals/create-board";
+import CreateColumnModal from "../modals/create-column";
 
-  const [selectedBoard, setSelectedBoard] = useState<Board | null>(null);
+export default function Kanban() {
+  const [boards, setBoards] = useState<Board[] | undefined>(undefined);
+  const [columns, setColumns] = useState<Column[] | undefined>(undefined);
+  const [cards, setCards] = useState<Card[] | undefined>(undefined);
+
+  const [selectedBoard, setSelectedBoard] = useState<Board | undefined>(
+    undefined
+  );
 
   const [loading, setLoading] = useState(true);
   const [isWaiting, setIsWaiting] = useState(false);
@@ -37,7 +45,6 @@ export default function Kanban() {
       return columns;
     }
   };
-
   const fetchCards = async () => {
     const { data: cards, error } = await supabase
       .from("Cards")
@@ -65,7 +72,6 @@ export default function Kanban() {
     setSelectedBoard(board!);
     setLoading(false);
   };
-
   const updateCard = async (
     CardID: number,
     ColumnID: number,
@@ -173,8 +179,9 @@ export default function Kanban() {
               <option key={board.id} value={board.id}>
                 {board.BoardName}
               </option>
-            ))}{" "}
+            ))}
           </select>
+          <CreateBoardModal />
         </div>
         <div className="mx-auto flex flex-col lg:flex-row gap-4 my-2">
           <DragDropContext onDragEnd={onDragEnd}>
@@ -187,19 +194,6 @@ export default function Kanban() {
                     <h3 className="text-lg font-bold text-gray-800 dark:text-white">
                       {column.ColumnName}
                     </h3>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth="1.5"
-                      stroke="currentColor"
-                      className="size-5">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M12 4.5v15m7.5-7.5h-15"
-                      />
-                    </svg>
                   </div>
                   <Droppable droppableId={column.id.toString()}>
                     {(provided, snapshot) => (
@@ -248,6 +242,17 @@ export default function Kanban() {
               </div>
             ))}
           </DragDropContext>
+        </div>
+        <div className="container mx-auto flex flex-row justify-center text-center">
+          <div className="flex flex-col justify-center text-center">
+            <CreateColumnModal BoardID={selectedBoard?.id} />
+            <CreateCardModal
+              ColumnIDs={columns?.map((column) => ({
+                ColumnID: column.id,
+                ColumnName: column.ColumnName,
+              }))}
+            />
+          </div>
         </div>
       </div>
     );

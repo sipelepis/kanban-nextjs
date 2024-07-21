@@ -24,6 +24,7 @@ export default async function RootLayout({
       <html lang="en">
         <AuthProvider authUrl={process.env.NEXT_PUBLIC_AUTH_URL!}>
           <PrelineScript />
+
           <body className={inter.className}>{children}</body>
         </AuthProvider>
       </html>
@@ -33,6 +34,7 @@ export default async function RootLayout({
       <html lang="en">
         <AuthProvider authUrl={process.env.NEXT_PUBLIC_AUTH_URL!}>
           <PrelineScript />
+
           <body className={inter.className}>
             <LoginAndSignup />
           </body>
